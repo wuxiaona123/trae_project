@@ -1,0 +1,55 @@
+# Python 虚拟环境与依赖
+venv/
+.venv/
+env/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# 打包与构建产物
+build/
+dist/
+*.egg-info/
+.eggs/
+wheels/
+
+# 缓存与测试产物
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+
+# 日志
+*.log
+logs/
+
+# 环境变量与密钥（.env.example 可提交）
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets.*
+
+# IDE / 编辑器配置
+.idea/
+.vscode/
+*.iml
+*.swp
+*.swo
+*~
+
+# 运行时数据与临时产物
+instance/
+*.sqlite3
+*.db
+.screenshots/
+
+# macOS 系统文件
+.DS_Store

@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>剪刀石头布 ✨</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: linear-gradient(135deg, #ffe0ec 0%, #fff5d6 50%, #e0f7ff 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+  }
+  .container {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(10px);
+    border-radius: 30px;
+    padding: 35px 40px;
+    box-shadow: 0 10px 40px rgba(255, 150, 180, 0.25);
+    max-width: 460px;
+    width: 100%;
+    text-align: center;
+  }
+  h1 {
+    font-size: 26px;
+    color: #ff6b9d;
+    margin-bottom: 6px;
+    letter-spacing: 2px;
+  }
+  .subtitle {
+    font-size: 13px;
+    color: #aaa;
+    margin-bottom: 22px;
+  }
+  .scoreboard {
+    display: flex;
+    justify-content: space-around;
+    background: #fff0f5;
+    border-radius: 20px;
+    padding: 16px 10px;
+    margin-bottom: 22px;
+  }
+  .score-box {
+    flex: 1;
+  }
+  .score-box .label {
+    font-size: 12px;
+    color: #ff9dbf;
+    margin-bottom: 4px;
+  }
+  .score-box .score {
+    font-size: 30px;
+    font-weight: bold;
+    color: #ff6b9d;
+  }
+  .score-box.computer .score { color: #7ec8ff; }
+  .vs {
+    align-self: center;
+    font-size: 16px;
+    color: #ccc;
+    padding: 0 8px;
+  }
+  .battle {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: #fffafc;
+    border-radius: 24px;
+    padding: 28px 16px;
+    margin-bottom: 22px;
+    min-height: 150px;
+  }
+  .hand {
+    font-size: 64px;
+    transition: transform 0.2s;
+  }
+  .hand.shake {
+    animation: shake 0.5s ease-in-out;
+  }
+  @keyframes shake {
+    0%, 100% { transform: translateY(0) rotate(0); }
+    25% { transform: translateY(-8px) rotate(-10deg); }
+    50% { transform: translateY(0) rotate(0); }
+    75% { transform: translateY(-8px) rotate(10deg); }
+  }
+  .result-msg {
+    font-size: 16px;
+    font-weight: bold;
+    min-height: 24px;
+    margin: 10px 0;
+  }
+  .result-msg.win { color: #ff6b9d; }
+  .result-msg.lose { color: #7ec8ff; }
+  .result-msg.draw { color: #bbb; }
+  .choices {
+    display: flex;
+    justify-content: space-around;
+    gap: 12px;
+    margin-bottom: 18px;
+  }
+  .btn-choice {
+    flex: 1;
+    background: #fff;
+    border: 3px solid #ffd0e0;
+    border-radius: 20px;
+    padding: 18px 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 12px;
+    color: #ff6b9d;
+  }
+  .btn-choice:hover:not(:disabled) {
+    background: #ffe0ec;
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(255, 107, 157, 0.25);
+  }
+  .btn-choice:active:not(:disabled) { transform: translateY(-1px); }
+  .btn-choice:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-choice .icon { font-size: 38px; display: block; margin-bottom: 4px; }
+  .btn-reset {
+    background: linear-gradient(135deg, #ff9dbf, #ffb88c);
+    border: none;
+    border-radius: 16px;
+    color: #fff;
+    font-size: 14px;
+    padding: 12px 28px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(255, 107, 157, 0.3);
+    transition: all 0.2s;
+    display: none;
+  }
+  .btn-reset:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(255, 107, 157, 0.4); }
+  .game-over-wrap { margin-top: 10px; }
+
+  /* 小花花撒落动画 */
+  .flower-rain {
+    position: fixed;
+    top: -50px;
+    font-size: 36px;
+    pointer-events: none;
+    animation: fall linear forwards;
+    z-index: 100;
+  }
+  @keyframes fall {
+    to {
+      transform: translateY(110vh) rotate(720deg);
+      opacity: 0;
+    }
+  }
+  .trophy {
+    font-size: 54px;
+    animation: bounce 0.8s ease infinite alternate;
+    margin: 8px 0;
+  }
+  @keyframes bounce {
+    from { transform: translateY(0); }
+    to   { transform: translateY(-10px); }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>✂️ 石头剪刀布 ✋</h1>
+  <p class="subtitle">三局两胜 · 赢了有小花花奖励哦 🌸</p>
+
+  <div class="scoreboard">
+    <div class="score-box player">
+      <div class="label">你 👧</div>
+      <div class="score" id="playerScore">0</div>
+    </div>
+    <div class="vs">VS</div>
+    <div class="score-box computer">
+      <div class="label">电脑 🤖</div>
+      <div class="score" id="computerScore">0</div>
+    </div>
+  </div>
+
+  <div class="battle">
+    <div class="hand" id="playerHand">❓</div>
+    <div class="hand" id="computerHand">❓</div>
+  </div>
+
+  <div class="result-msg" id="resultMsg">选择一个开始吧～</div>
+
+  <div class="choices" id="choices">
+    <button class="btn-choice" data-choice="rock">
+      <span class="icon">✊</span>石头
+    </button>
+    <button class="btn-choice" data-choice="scissors">
+      <span class="icon">✌️</span>剪刀
+    </button>
+    <button class="btn-choice" data-choice="paper">
+      <span class="icon">✋</span>布
+    </button>
+  </div>
+
+  <div class="game-over-wrap" id="gameOverWrap" style="display:none;">
+    <div class="trophy" id="trophy"></div>
+    <button class="btn-reset" id="btnReset">再来一局 🔄</button>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const playerHand = $('playerHand');
+const computerHand = $('computerHand');
+const resultMsg = $('resultMsg');
+const playerScoreEl = $('playerScore');
+const computerScoreEl = $('computerScore');
+const gameOverWrap = $('gameOverWrap');
+const trophy = $('trophy');
+const buttons = document.querySelectorAll('.btn-choice');
+let playing = false;
+
+const emoji = { rock: '✊', scissors: '✌️', paper: '✋' };
+const cn = { rock: '石头', scissors: '剪刀', paper: '布' };
+
+function setButtonsDisabled(disabled) {
+  buttons.forEach(b => b.disabled = disabled);
+}
+
+async function playRound(choice) {
+  if (playing) return;
+  playing = true;
+  setButtonsDisabled(true);
+  gameOverWrap.style.display = 'none';
+  playerHand.textContent = '🤔';
+  computerHand.textContent = '🤔';
+  playerHand.classList.remove('shake');
+  computerHand.classList.remove('shake');
+  void playerHand.offsetWidth;
+  playerHand.classList.add('shake');
+  computerHand.classList.add('shake');
+
+  try {
+    const resp = await fetch('/play', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ choice })
+    });
+    const data = await resp.json();
+
+    setTimeout(() => {
+      playerHand.classList.remove('shake');
+      computerHand.classList.remove('shake');
+      playerHand.textContent = data.player_emoji;
+      computerHand.textContent = data.computer_emoji;
+
+      // 更新分数
+      playerScoreEl.textContent = data.player_score;
+      computerScoreEl.textContent = data.computer_score;
+
+      // 结果文字
+      resultMsg.classList.remove('win', 'lose', 'draw');
+      if (data.result === 'win') {
+        resultMsg.textContent = `🎉 你赢啦！${cn[data.player_choice]} 克 ${cn[data.computer_choice]}`;
+        resultMsg.classList.add('win');
+      } else if (data.result === 'lose') {
+        resultMsg.textContent = `😢 你输了！${cn[data.computer_choice]} 克 ${cn[data.player_choice]}`;
+        resultMsg.classList.add('lose');
+      } else {
+        resultMsg.textContent = `🤝 平局！再来！`;
+        resultMsg.classList.add('draw');
+      }
+
+      if (data.game_over) {
+        showGameOver(data.winner === 'player');
+      } else {
+        setButtonsDisabled(false);
+      }
+      playing = false;
+    }, 500);
+  } catch (err) {
+    resultMsg.textContent = '😵 出了点小问题～';
+    setButtonsDisabled(false);
+    playing = false;
+  }
+}
+
+function showGameOver(playerWon) {
+  setButtonsDisabled(true);
+  gameOverWrap.style.display = 'block';
+  if (playerWon) {
+    trophy.textContent = '🌸🌷🌻';
+    resultMsg.textContent = '🏆 恭喜！你赢得了小花花！';
+    resultMsg.classList.remove('lose', 'draw');
+    resultMsg.classList.add('win');
+    rainFlowers();
+  } else {
+    trophy.textContent = '🐾🐾🐾';
+    resultMsg.textContent = '😿 这次输了，下次加油！';
+    resultMsg.classList.remove('win', 'draw');
+    resultMsg.classList.add('lose');
+  }
+}
+
+// 小花花撒落效果
+function rainFlowers() {
+  const flowers = ['🌸', '🌷', '🌻', '🌼', '💮', '🌺', '🎀', '💖'];
+  for (let i = 0; i < 40; i++) {
+    setTimeout(() => {
+      const span = document.createElement('span');
+      span.className = 'flower-rain';
+      span.textContent = flowers[Math.floor(Math.random() * flowers.length)];
+      span.style.left = Math.random() * 100 + 'vw';
+      span.style.animationDuration = (2 + Math.random() * 2.5) + 's';
+      span.style.fontSize = (26 + Math.random() * 22) + 'px';
+      document.body.appendChild(span);
+      setTimeout(() => span.remove(), 5000);
+    }, i * 60);
+  }
+}
+
+async function resetGame() {
+  await fetch('/reset', { method: 'POST' });
+  playerScoreEl.textContent = 0;
+  computerScoreEl.textContent = 0;
+  playerHand.textContent = '❓';
+  computerHand.textContent = '❓';
+  resultMsg.textContent = '选择一个开始吧～';
+  resultMsg.classList.remove('win', 'lose', 'draw');
+  gameOverWrap.style.display = 'none';
+  setButtonsDisabled(false);
+}
+
+buttons.forEach(b => b.addEventListener('click', () => playRound(b.dataset.choice)));
+$('btnReset').addEventListener('click', resetGame);
+</script>
+</body>
+</html>
